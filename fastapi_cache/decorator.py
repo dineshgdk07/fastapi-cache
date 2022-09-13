@@ -68,6 +68,7 @@ def cache(
             if (
                 request and request.headers.get("Cache-Control") == "no-store"
             ) or not FastAPICache.get_enable():
+                print(101)
                 return await func(*args, **kwargs)
 
             coder = coder or FastAPICache.get_coder()
@@ -81,13 +82,15 @@ def cache(
             ttl, ret = await backend.get_with_ttl(cache_key)
             if not request:
                 if ret is not None:
+                    print(102)
                     return coder.decode(ret)
                 ret = await func(*args, **kwargs)
                 await backend.set(cache_key, coder.encode(ret), expire or FastAPICache.get_expire())
+                print(103)
                 return ret
 
-            if request.method != "GET":
-                return await func(request, *args, **kwargs)
+            # if request.method != "GET":
+            #     return await func(request, *args, **kwargs)
             if_none_match = request.headers.get("if-none-match")
             if ret is not None:
                 if response:
@@ -95,8 +98,10 @@ def cache(
                     etag = f"W/{hash(ret)}"
                     if if_none_match == etag:
                         response.status_code = 304
+                        print(104)
                         return response
                     response.headers["ETag"] = etag
+                print(105)
                 return coder.decode(ret)
             if not request_param:
                 kwargs.pop("request")
@@ -108,8 +113,12 @@ def cache(
                 ret = await run_in_threadpool(func, *args, **kwargs)
 
             await backend.set(cache_key, coder.encode(ret), expire or FastAPICache.get_expire())
+            print(cache_key)
+            print(106)
             return ret
 
+        print(107)
         return inner
 
+    print(108)
     return wrapper
